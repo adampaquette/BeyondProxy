@@ -1,6 +1,6 @@
 <?php
 /*
-Modified by Adam Paquette
+Modified by Adam Paquette : nfs120@gmail.com
 Script d'origine : <https://github.com/joshdick/miniProxy>
 
 TODO:
