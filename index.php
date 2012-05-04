@@ -7,7 +7,7 @@ TODO:
     Gérer les cookies
     Serveur HTTPS
     Activer/Désactiver la gestion javascript/CSS/images/flash
-    Gérer tout les types de header javascript
+    Change utf8_decode for the real encoding
 */
 
 session_start();
@@ -31,7 +31,7 @@ function getFile($fileLoc)
     //Sends user-agent of actual browser being used--unless there isn't one.
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     if(empty($user_agent)) 
-        $user_agent = "Mozilla/5.0";
+        $user_agent = "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)";
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
@@ -40,6 +40,8 @@ function getFile($fileLoc)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FAILONERROR, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); //Quick fix for HTTPS connections
+    curl_setopt($ch, CURLOPT_COOKIEJAR, 'cookies.txt'); //Save cookies to this file
+    curl_setopt($ch, CURLOPT_COOKIEFILE, 'cookies.txt'); //Use saved cookies for the call
 
     //If data was POSTed to the proxy, re-POST the data to the requested URL
     $postData = '';
@@ -146,12 +148,12 @@ function proxifyJS($js, $baseURL)
 }
 
 //Assume that any supplied URLs starting with // are HTTP URLs.
-/*if(strpos($url, "//") === 0) 
-    $url = "http:".$url; */
+if(strpos($url, "//") === 0) 
+    $url = "http:".$url; 
 
 //Assume that any supplied URLs without a scheme are HTTP URLs.
-/*if(!preg_match("@^.*://@", $url)) 
-    $url = "http://".$url; */
+if(!preg_match("@^.*://@", $url)) 
+    $url = "http://".$url; 
 
 $file = getFile($url);
 header("Content-Type: ".$file["contentType"]);
@@ -196,13 +198,7 @@ if(stripos($file["contentType"], "text/html") !== false)
     
     //Profixy <scritp> tags
     foreach($xpath->query('//script') as $script) 
-    {
-        /*$fp = fopen('jsTags.txt', 'a');
-        fwrite($fp, "URL : ".$url."\r\nValue : ".htmlentities($script->nodeValue)."\r\n\r\n");
-        fclose($fp);*/
-        
         $script->nodeValue = proxifyJs($script->nodeValue, $url);
-    }
     
     //Profixy <style> tags
     foreach($xpath->query('//style') as $style) 
@@ -237,23 +233,12 @@ else if(stripos($file["contentType"], "text/css") !== false)
 } 
 //Proxify javascript
 else if(stripos($file["contentType"], "javascript") !== false) 
-{
+{ 
     echo proxifyJS($file["data"], $url);
-    
-    /*$fp = fopen('datajs.txt', 'a');
-    fwrite($fp, "TYPE DATA : ".$file["data"]."\r\n\r\n\r\n\r\n\r\n\r\n");
-    fclose($fp);*/
 }
 else //Serve unmodified through the proxy with the correct headers (images...)
 { 
     header("Content-Length: ".strlen($file["data"]));
     echo $file["data"];
-    
-    /*$fp = fopen('data.txt', 'a');
-    fwrite($fp, "TYPE DATA : ".$file["contentType"]."\r\n");
-    fclose($fp);*/
 }
-
-
-
 ?>
